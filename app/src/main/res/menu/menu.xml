@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/color_palette"
+        android:icon="@drawable/color_palette"
+        android:title="@string/color_palette"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/line_width"
+        android:icon="@drawable/stroke_width"
+        android:title="@string/line_width"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/erase"
+        android:icon="@drawable/clear"
+        android:title="@string/erase"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/save"
+        android:title="@string/save_image"
+        />
+
+    <item
+        android:id="@+id/clear"
+        android:title="Clear"
+        />
+
+
+</menu>

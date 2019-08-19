@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">DrawingApp</string>
+    <string name="color_palette">Color Palette</string>
+    <string name="save_image">Save</string>
+    <string name="line_width">Line Width</string>
+    <string name="erase">Erase</string>
+</resources>
