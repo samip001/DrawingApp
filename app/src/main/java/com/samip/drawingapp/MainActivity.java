@@ -22,7 +22,8 @@ public class MainActivity extends AppCompatActivity {
 
     private DrawingView drawingView;
     private AlertDialog.Builder currentDialog;
-    // use for testing
+    private AlertDialog dialogLineWidth;
+    // used when changing the width of line
     private ImageView dialogWidthImageView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,31 +65,39 @@ public class MainActivity extends AppCompatActivity {
 
     public void showLineWidthDialog(){
         currentDialog = new AlertDialog.Builder(this);
+
         // get dialog view
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_line_width,null);
         // get all the components inside of a dialog
         dialogWidthImageView = dialogView.findViewById(R.id.dialog_line_width_image_view);
-        SeekBar lineWidthSeekBar = dialogView.findViewById(R.id.dialog_line_width_seek_bar);
+        final SeekBar lineWidthSeekBar = dialogView.findViewById(R.id.dialog_line_width_seek_bar);
         lineWidthSeekBar.setOnSeekBarChangeListener(widthSeekBarChange);
 
         Button lineWidthBtn = dialogView.findViewById(R.id.dialog_line_width_btn);
         lineWidthBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(),"Hello Line Width",Toast.LENGTH_SHORT).show();
+                drawingView.setLineWidth(lineWidthSeekBar.getProgress());
+                // line width dialog is canceled
+                dialogLineWidth.dismiss();
+                // no dialog is set i.e no pop up dialog is setted
+                currentDialog = null;
             }
         });
 
         // dialog_line_width layout will be set in AlertDialog.builder
         currentDialog.setView(dialogView);
-        currentDialog.create();
-        currentDialog.show();
+
+        // dialog line width set and show
+        dialogLineWidth = currentDialog.create();
+        dialogLineWidth.setTitle("Set Width of Line");
+        dialogLineWidth.show();
 
     }
 
     // seekbar changed action listener
     private SeekBar.OnSeekBarChangeListener widthSeekBarChange = new SeekBar.OnSeekBarChangeListener() {
-        // use for testing to check the line width
+        // make a bitmap and show in imageview when line width is changed via seek bar
         Bitmap bitmap = Bitmap.createBitmap(400,100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
