@@ -1,5 +1,6 @@
 package com.samip.drawingapp;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -7,6 +8,7 @@ import android.graphics.Paint;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,11 +22,22 @@ import com.samip.customview.DrawingView;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final String TAG = "MainActivity";
+
     private DrawingView drawingView;
     private AlertDialog.Builder currentDialog;
     private AlertDialog dialogLineWidth;
-    // used when changing the width of line
+    private AlertDialog dialogColor;
+
+    // used when changing the width of line from dialog_line_width layout
     private ImageView dialogWidthImageView;
+    // used when chnaging the colof of line from dialog_color layout
+    private SeekBar alphaSeekBar;
+    private SeekBar redColorSeekBar;
+    private SeekBar greenColorSeekBar;
+    private SeekBar blueColorSeekBar;
+    private View colorDialogColorView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,13 +61,17 @@ public class MainActivity extends AppCompatActivity {
 
         switch (itemId){
             case R.id.color_palette:
+                showColorDialog();
                 break;
             case R.id.line_width:
                 showLineWidthDialog();
                 break;
-            case R.id.erase:
-                break;
             case R.id.save:
+                String path = drawingView.saveToInternalStorage();
+                //drawingView.saveImageToExternalStorage();
+                Intent intent = new Intent(getApplicationContext(),ImageLoadActivity.class);
+                intent.putExtra("imagepath",path);
+                startActivity(intent);
                 break;
             case R.id.clear:
                 drawingView.clearAll();
@@ -71,12 +88,14 @@ public class MainActivity extends AppCompatActivity {
         // get all the components inside of a dialog
         dialogWidthImageView = dialogView.findViewById(R.id.dialog_line_width_image_view);
         final SeekBar lineWidthSeekBar = dialogView.findViewById(R.id.dialog_line_width_seek_bar);
+        lineWidthSeekBar.setProgress(drawingView.getLineWidth());
         lineWidthSeekBar.setOnSeekBarChangeListener(widthSeekBarChange);
 
         Button lineWidthBtn = dialogView.findViewById(R.id.dialog_line_width_btn);
         lineWidthBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "onClick: Line Width Seekbar: "+lineWidthSeekBar.getProgress());
                 drawingView.setLineWidth(lineWidthSeekBar.getProgress());
                 // line width dialog is canceled
                 dialogLineWidth.dismiss();
@@ -115,6 +134,91 @@ public class MainActivity extends AppCompatActivity {
             // set bitmap in imagedialog view
             dialogWidthImageView.setImageBitmap(bitmap);
 
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+
+        }
+    };
+
+    public void showColorDialog(){
+        currentDialog = new AlertDialog.Builder(this);
+        View colorDialogView = getLayoutInflater().inflate(R.layout.dialog_color,null);
+        // get all the components from dialog_color layout
+        alphaSeekBar = colorDialogView.findViewById(R.id.color_alpha);
+        redColorSeekBar = colorDialogView.findViewById(R.id.color_red);
+        greenColorSeekBar = colorDialogView.findViewById(R.id.color_green);
+        blueColorSeekBar = colorDialogView.findViewById(R.id.color_blue);
+        colorDialogColorView = colorDialogView.findViewById(R.id.color_colorview);
+        Button colorBtn = colorDialogView.findViewById(R.id.color_line_color_btn);
+
+
+        // register color seekbar event listeners
+        alphaSeekBar.setOnSeekBarChangeListener(colorSeekbarChanged);
+        redColorSeekBar.setOnSeekBarChangeListener(colorSeekbarChanged);
+        greenColorSeekBar.setOnSeekBarChangeListener(colorSeekbarChanged);
+        blueColorSeekBar.setOnSeekBarChangeListener(colorSeekbarChanged);
+
+        // set btn action event listener
+        colorBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawingView.setLineColor(Color.argb(
+                        alphaSeekBar.getProgress(),
+                        redColorSeekBar.getProgress(),
+                        greenColorSeekBar.getProgress(),
+                        blueColorSeekBar.getProgress()
+                ));
+
+                dialogColor.dismiss();
+                currentDialog = null;
+            }
+        });
+
+        // setting seekbar with progress with selected color
+        int color = drawingView.getLineColor();
+        alphaSeekBar.setProgress(Color.alpha(color));
+        redColorSeekBar.setProgress(Color.red(color));
+        greenColorSeekBar.setProgress(Color.green(color));
+        blueColorSeekBar.setProgress(Color.blue(color));
+
+        // setting view with selected color
+        colorDialogColorView.setBackgroundColor(Color.argb(
+                Color.alpha(color),
+                Color.red(color),
+                Color.green(color),
+                Color.blue(color))
+        );
+
+        currentDialog.setView(colorDialogView);
+        dialogColor = currentDialog.create();
+        dialogColor.setTitle("Set Line Color");
+        dialogColor.show();
+
+
+    }
+
+
+    private SeekBar.OnSeekBarChangeListener colorSeekbarChanged = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            int newColor = Color.argb(
+                    alphaSeekBar.getProgress(),
+                    redColorSeekBar.getProgress(),
+                    greenColorSeekBar.getProgress(),
+                    blueColorSeekBar.getProgress()
+            );
+            // setting new color
+            //drawingView.setLineColor(newColor);
+
+            // set the dialog view with color
+            colorDialogColorView.setBackgroundColor(newColor);
         }
 
         @Override

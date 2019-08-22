@@ -4,4 +4,7 @@
     <string name="save_image">Save</string>
     <string name="line_width">Line Width</string>
     <string name="erase">Erase</string>
+    <string name="red">Red</string>
+    <string name="green">Green</string>
+    <string name="blue">Blue</string>
 </resources>

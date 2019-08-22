@@ -15,12 +15,6 @@
         app:showAsAction="always"/>
 
     <item
-        android:id="@+id/erase"
-        android:icon="@drawable/clear"
-        android:title="@string/erase"
-        app:showAsAction="always"/>
-
-    <item
         android:id="@+id/save"
         android:title="@string/save_image"
         />

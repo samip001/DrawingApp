@@ -1,22 +1,38 @@
 package com.samip.customview;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
+
 
 public class DrawingView extends View {
 
+    private static final String TAG = "DrawingView";
     public static final float TOUCH_TOLERANCE = 10f;
 
     private Bitmap bitmap;
@@ -25,6 +41,8 @@ public class DrawingView extends View {
     private Paint paintLine;
     private HashMap<Integer, Path> pathMap;
     private HashMap<Integer, Point> previousPointMap;
+    private OutputStream outputStream;
+
 
     public DrawingView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -158,6 +176,7 @@ public class DrawingView extends View {
     public int getLineWidth(){
         return (int) paintLine.getStrokeWidth();
     }
+
     private void touchEnded(int pointerId) {
         Path path = pathMap.get(pointerId); // get the corresponding path
         bitmapCanvas.drawPath(path,paintLine); // draw the bitmapCanvas
@@ -185,4 +204,129 @@ public class DrawingView extends View {
         point.y = (int) y;
 
     }
+
+    public void saveImage(){
+        String filename = "drawing_app_"+System.currentTimeMillis();
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Video.Media.TITLE,filename);
+        values.put(MediaStore.Video.Media.DATE_ADDED,System.currentTimeMillis());
+        values.put(MediaStore.Video.Media.MIME_TYPE,"image/jpg");
+
+        // get a URI for the location to save the file
+        Uri uri = getContext().getContentResolver().insert(MediaStore.Video.Media.INTERNAL_CONTENT_URI, values);
+        try (OutputStream outputStream = getContext().getContentResolver().openOutputStream(uri)) {
+            // copy the bitmap to output stream
+            bitmap.compress(Bitmap.CompressFormat.JPEG,100,outputStream);
+            outputStream.flush();
+
+            Toast message = Toast.makeText(getContext(), "Image Saved!", Toast.LENGTH_LONG);
+            message.setGravity(Gravity.CENTER, message.getXOffset() / 2,
+                    message.getYOffset() / 2);
+            message.show();
+
+        }
+        catch (IOException e) {
+            Toast message = Toast.makeText(getContext(), "Image Not Saved", Toast.LENGTH_LONG);
+            message.setGravity(Gravity.CENTER, message.getXOffset() / 2,
+                    message.getYOffset() / 2);
+            message.show();
+        }
+    }
+
+    // save image to external storage
+    public void saveImageToExternalStorage(){
+        String filename  = "drawing_app_"+System.currentTimeMillis();
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Video.Media.TITLE,filename);
+        values.put(MediaStore.Audio.Media.DATE_ADDED,System.currentTimeMillis());
+        values.put(MediaStore.Audio.Media.MIME_TYPE,"image/jpg");
+
+        // get a URI for the location to save the file
+        Uri uri = getContext().getContentResolver().insert(MediaStore.Video.Media.INTERNAL_CONTENT_URI,values);
+
+        try {
+            outputStream = getContext().getContentResolver().openOutputStream(uri);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        // get file
+        File file = new File(Environment.getExternalStorageDirectory()+File.separator+"test.jpg");
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100,outputStream);
+
+        try{
+            outputStream.flush();
+            outputStream.close();
+
+            Toast message = Toast.makeText(getContext(), "Image Saved", Toast.LENGTH_LONG);
+            message.setGravity(Gravity.CENTER, message.getXOffset() / 2,
+                    message.getYOffset() / 2);
+            message.show();
+        }catch(IOException exc){
+            exc.printStackTrace();
+        }
+
+        try {
+            MediaStore.Images.Media.insertImage(getContext().getContentResolver(),file.getAbsolutePath(),file.getName(),file.getName());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getImagePath() {
+        ContextWrapper cw = new ContextWrapper(getContext());
+        // path to /data/data/yourapp/app_data/imageDir
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        return directory.getAbsolutePath();
+    }
+
+    public String saveToInternalStorage() {
+        ContextWrapper cw = new ContextWrapper(getContext());
+        // path to /data/data/yourapp/app_data/imageDir
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        // Create imageDir
+        File mypath = new File(directory,  "drawingapp_" + System.currentTimeMillis()+ "_profile.jpg");
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            // Use the compress method on the BitMap object to write image to the OutputStream
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.flush();
+                fos.close();
+
+                Toast message = Toast.makeText(getContext(), "Image Saved +" + directory.getAbsolutePath(), Toast.LENGTH_LONG);
+                message.setGravity(Gravity.CENTER, message.getXOffset() / 2,
+                        message.getYOffset() / 2);
+                message.show();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return mypath.getPath();
+    }
+
+    public Bitmap loadImageFromStorage(String path) {
+        Bitmap b = null;
+        try {
+            File f = new File(path);
+            b = BitmapFactory.decodeStream(new FileInputStream(f));
+            // ImageView imageView = findViewById(R.id.savedImageView);
+            // imageView.setImageBitmap(b);
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return b;
+
+    }
+
+
 }
